@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Function to calculate the minimum edit distance between two strings
+min_edit_dist() {
+  local str1="$1"
+  local str2="$2"
+
+  # Create a matrix to store the edit distances
+  local matrix
+  matrix=($(for i in $(seq 0 ${#str1}); do echo 0; done))
+  for i in $(seq 0 ${#str2}); do matrix[0,$i]=$i; done
+
+  # Calculate the edit distances
+  for i in $(seq 1 ${#str1}); do
+    for j in $(seq 1 ${#str2}); do
+      if [ "${str1:$i-1:1}" = "${str2:$j-1:1}" ]; then
+        cost=0
+      else
+        cost=1
+      fi
+      matrix[$i,$j]=$(( $(echo "${matrix[$i-1,$j]}" + 1 | bc) < $(echo "${matrix[$i,$j-1]}" + 1 | bc) ? $(echo "${matrix[$i-1,$j]}" + 1 | bc) : $(echo "${matrix[$i,$j-1]}" + 1 | bc) ))
+      matrix[$i,$j]=$(( ${matrix[$i,$j]} < $(echo "${matrix[$i-1,$j-1]}" + $cost | bc) ? ${matrix[$i,$j]} : $(echo "${matrix[$i-1,$j-1]}" + $cost | bc) ))
+    done
+  done
+
+  # Return the minimum edit distance
+  echo "${matrix[${#str1},${#str2}]}"
+}
+
+# Get the input strings
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <string1> <string2>"
+  exit 1
+fi
+
+# Calculate the minimum edit distance
+distance=$(min_edit_dist "$1" "$2")
+
+# Print the result
+echo "Minimum edit distance: $distance"
